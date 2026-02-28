@@ -5,7 +5,7 @@ import { Camera } from '@mediapipe/camera_utils';
 function PoseTracker() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [angle, setAngle] = useState(null); // 初始设为 null，方便判断是否显示
+  const [angle, setAngle] = useState(null);
 
   const calculateAngle = (a, b, c) => {
     const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -21,8 +21,7 @@ function PoseTracker() {
 
     pose.setOptions({
       modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: true,
+      enableSegmentation: true, // 🟢 必须开启：人体分割功能
       smoothSegmentation: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5
@@ -36,11 +35,15 @@ function PoseTracker() {
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, width, height);
 
+      // --- 1. 绘制绿色透明人体层 (Segmentation Mask) ---
       if (results.segmentationMask) {
         canvasCtx.drawImage(results.segmentationMask, 0, 0, width, height);
+        // 关键：source-in 模式只在有人的地方上色
         canvasCtx.globalCompositeOperation = 'source-in';
-        canvasCtx.fillStyle = 'rgba(0, 255, 127, 0.3)';
+        canvasCtx.fillStyle = 'rgba(0, 255, 127, 0.3)'; // 绿色半透明覆盖层
         canvasCtx.fillRect(0, 0, width, height);
+
+        // 恢复背景图
         canvasCtx.globalCompositeOperation = 'destination-atop';
         canvasCtx.drawImage(results.image, 0, 0, width, height);
         canvasCtx.globalCompositeOperation = 'source-over';
@@ -49,48 +52,33 @@ function PoseTracker() {
       }
 
       if (results.poseLandmarks) {
-        const landmarks = results.poseLandmarks;
-        const hip = landmarks[24];
-        const knee = landmarks[26];
-        const ankle = landmarks[28];
+        const L = results.poseLandmarks;
+        const curAngle = calculateAngle(L[24], L[26], L[28]);
+        setAngle(curAngle);
 
-        // --- 核心改进：双重逻辑过滤虚假点 ---
-        // 1. 确信度必须大于 0.75
-        // 2. 坐标不能贴在画面最底部 (y < 0.95)
-        const isLegVisible = knee.visibility > 0.75 && knee.y < 0.95 &&
-                             ankle.visibility > 0.75 && ankle.y < 0.95;
-
-        let currentAngle = null;
-        if (isLegVisible) {
-          currentAngle = calculateAngle(hip, knee, ankle);
-          setAngle(currentAngle);
-        } else {
-          setAngle(null); // 看不见腿时，清除角度显示
-        }
-
+        // --- 2. 绘制全套骨骼连线 ---
         const CONNECTIONS = [
-          [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
-          [11, 23], [12, 24], [23, 24],
-          [23, 25], [25, 27], [24, 26], [26, 28]
+          [11, 12], [11, 23], [12, 24], [23, 24], // 躯干
+          [23, 25], [25, 27], [24, 26], [26, 28], // 腿部
+          [11, 13], [13, 15], [12, 14], [14, 16]  // 手臂
         ];
 
-        // 绘线：仅在检测到有效角度且达标时变红
-        canvasCtx.strokeStyle = (currentAngle && currentAngle < 100) ? "#FF0000" : "#00FF00";
+        // 角度小于 100 度变红（深蹲达标提示）
+        canvasCtx.strokeStyle = (curAngle < 100) ? "#FF4D4D" : "#C8F060";
         canvasCtx.lineWidth = 5;
 
         CONNECTIONS.forEach(([startIdx, endIdx]) => {
-          const start = landmarks[startIdx];
-          const end = landmarks[endIdx];
-          if (start && end) {
+          if (L[startIdx] && L[endIdx]) {
             canvasCtx.beginPath();
-            canvasCtx.moveTo(start.x * width, start.y * height);
-            canvasCtx.lineTo(end.x * width, end.y * height);
+            canvasCtx.moveTo(L[startIdx].x * width, L[startIdx].y * height);
+            canvasCtx.lineTo(L[endIdx].x * width, L[endIdx].y * height);
             canvasCtx.stroke();
           }
         });
 
-        landmarks.forEach((pt, index) => {
-          if (index > 10) {
+        // --- 3. 绘制白色关节点 ---
+        L.forEach((pt, index) => {
+          if (index > 10) { // 跳过面部点
             canvasCtx.beginPath();
             canvasCtx.arc(pt.x * width, pt.y * height, 5, 0, 2 * Math.PI);
             canvasCtx.fillStyle = "white";
@@ -101,45 +89,28 @@ function PoseTracker() {
       canvasCtx.restore();
     });
 
-    if (videoRef.current) {
-      const camera = new Camera(videoRef.current, {
-        onFrame: async () => {
-          await pose.send({ image: videoRef.current });
-        },
-        width: 640,
-        height: 480
-      });
-      camera.start();
-    }
+    const camera = new Camera(videoRef.current, {
+      onFrame: async () => { await pose.send({ image: videoRef.current }); },
+      width: 1280, height: 720
+    });
+    camera.start();
+
+    return () => camera.stop();
   }, []);
 
   return (
-    <div style={{ position: 'relative', textAlign: 'center' }}>
-      <div style={{
-        position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
-        backgroundColor: 'rgba(0,0,0,0.6)', padding: '10px 20px', borderRadius: '20px',
-        color: angle ? (angle < 100 ? '#ff4d4d' : '#00ffcc') : '#888',
-        fontWeight: 'bold', fontSize: '24px', zIndex: 10, border: '2px solid'
-      }}>
-        {angle ? `KNEE ANGLE: ${angle}°` : "WAITING FOR FULL BODY..."}
-        { (angle && angle < 100) ? ' ✓ GOOD' : ''}
+    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ marginBottom: '20px', background: 'rgba(0,0,0,0.8)', padding: '15px 30px', borderRadius: '50px', border: '2px solid #C8F060', color: '#C8F060', fontSize: '24px', fontWeight: '800' }}>
+        {angle ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY..."}
       </div>
-
       <video ref={videoRef} style={{ display: 'none' }} />
-      <canvas
-        ref={canvasRef}
-        width="640"
-        height="480"
-        style={{
-          transform: 'scaleX(-1)',
-          border: '4px solid #00ffcc',
-          borderRadius: '15px',
-          boxShadow: '0 0 20px rgba(0, 255, 204, 0.4)'
-        }}
-      />
-      <div style={{ marginTop: '10px', color: '#00ffcc', letterSpacing: '2px' }}>
-        AI VISION SYSTEM ACTIVE // BIOMETRIC SCANNING...
-      </div>
+      <canvas ref={canvasRef} width="640" height="480" style={{ transform: 'scaleX(-1)', borderRadius: '20px', boxShadow: '0 0 30px rgba(200, 240, 96, 0.2)' }} />
+      <button
+        onClick={() => window.location.pathname = '/dash.html'}
+        style={{ marginTop: '20px', padding: '10px 25px', borderRadius: '10px', background: '#C8F060', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+      >
+        BACK TO DASHBOARD
+      </button>
     </div>
   );
 }
