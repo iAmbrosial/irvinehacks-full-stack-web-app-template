@@ -1,42 +1,48 @@
-#root {
-	max-width: 1280px;
-	margin: 0 auto;
-	padding: 2rem;
-	text-align: center;
+/* 1. 基础重置：确保没有任何容器限制大小 */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  overflow: hidden; /* 防止出现滚动条 */
 }
 
-.logo {
-	height: 6em;
-	padding: 1.5em;
-	will-change: filter;
-	transition: filter 300ms;
-}
-.logo:hover {
-	filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-	filter: drop-shadow(0 0 2em #61dafbaa);
+/* 2. 这里的布局必须是相对定位，且占满全屏 */
+.App-fullscreen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes logo-spin {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
+/* 3. 强制摄像头和画布居中铺满 */
+/* 使用 fixed 或 absolute 结合 inset: 0 可以强制其回归视觉中心 */
+video, canvas {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important; /* 核心：将中心点拉回页面正中央 */
+  min-width: 100% !important;
+  min-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: cover !important; /* 确保画面不留黑边地铺满 */
+  z-index: 1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-	a:nth-of-type(2) .logo {
-		animation: logo-spin infinite 20s linear;
-	}
+/* 画布层级稍微高一点，确保骨架线在视频上方 */
+canvas {
+  z-index: 2;
 }
 
-.card {
-	padding: 2em;
-}
-
-.read-the-docs {
-	color: #888;
+/* 如果你还有那个“WAITING FOR FULL BODY”的提示框，给它也定个位 */
+.overlay-hint {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
 }
