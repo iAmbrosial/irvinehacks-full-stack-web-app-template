@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>workout. — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+//MAIN DASHBOARD
+  <div class="page" id="dashPage">
+
+    <nav>
+      <div class="nav-logo">workout<span>.</span></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab(this,'dashboard')">Dashboard</button>
+        <a href = "tracker.html" class = "nav-tab">Track</a>
+      </div>
+      <button class="nav-profile" onclick="openProfile()">👤</button>
+    </nav>
+
+    <div class="dash-scroll">
+
+      <div class="quote-banner">
+        <div class="quote-label">Quote of the Day</div>
+        //USE PUBLIC DATABASE LATER (avail on github)
+        <div class="quote-text">"The secret of getting ahead is getting started."</div>
+        <div class="quote-author">— Mark Twain</div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Active Goals</div>
+        <button class="section-action" onclick="showToast('Viewing all goals')">See all →</button>
+      </div>
+
+      <div class="card-scroll-wrap">
+        <div class="card-row">
+
+          <div class="card" style="--card-accent:#c8f060;--card-accent-bg:rgba(200,240,96,0.1)">
+            <div class="card-icon">🎯</div>
+            <div class="card-title">Daily Steps</div>
+            <div class="card-desc">Reach 10,000 steps every day this week.</div>
+            <div class="card-stat">7,420</div>
+            <div class="card-stat-label">steps today</div>
+            <button class="card-btn" onclick="goToTrack()">TRACK</button>
+          </div>
+
+          <div class="card" style="--card-accent:#60d4f0;--card-accent-bg:rgba(96,212,240,0.1)">
+            <div class="card-icon">💧</div>
+            <div class="card-title">Hydration</div>
+            <div class="card-desc">Drink 8 glasses of water each day.</div>
+            <div class="card-stat">/ 8</div>
+            <div class="card-stat-label">glasses today</div>
+            <button class="card-btn" style="border-color:#60d4f0;color:#60d4f0" onclick="showToast('Water logged!')">ADD ENTRY</button>
+          </div>
+
+          <div class="card" style="--card-accent:#f060a0;--card-accent-bg:rgba(240,96,160,0.1)">
+            <div class="card-icon">📚</div>
+            <div class="card-title">Reading</div>
+            <div class="card-desc">Read 20 minutes daily for 30 days.</div>
+            <div class="card-stat">18 / 30</div>
+            <div class="card-stat-label">days complete</div>
+            <button class="card-btn" style="border-color:#f060a0;color:#f060a0" onclick="showToast('Session logged!')">LOG SESSION</button>
+          </div>
+
+          <div class="card" style="--card-accent:#f0a060;--card-accent-bg:rgba(240,160,96,0.1)">
+            <div class="card-icon">🧘</div>
+            <div class="card-title">Meditation</div>
+            <div class="card-desc">10 min of mindfulness every morning.</div>
+            <div class="card-stat">12 min</div>
+            <div class="card-stat-label">today's session</div>
+            <button class="card-btn" style="border-color:#f0a060;color:#f0a060" onclick="showToast('Starting...')">START</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:28px">
+        <div class="section-title">Quick Actions</div>
+      </div>
+
+      <div class="card-grid">
+        <div class="grid-card">
+          <div class="grid-card-icon">📊</div>
+          <div class="grid-card-title">Analytics</div>
+          <div class="grid-card-sub">View your weekly report</div>
+          <button class="grid-card-btn" style="--btn-bg:rgba(200,240,96,0.12);--btn-color:#c8f060" onclick="showToast('Opening analytics...')">VIEW REPORT</button>
+        </div>
+        <div class="grid-card">
+          <div class="grid-card-icon">➕</div>
+          <div class="grid-card-title">New Goal</div>
+          <div class="grid-card-sub">Set a new challenge</div>
+          <button class="grid-card-btn" style="--btn-bg:rgba(96,212,240,0.12);--btn-color:#60d4f0" onclick="showToast('Create new goal!')">CREATE</button>
+        </div>
+        <div class="grid-card">
+          <div class="grid-card-icon">🏆</div>
+          <div class="grid-card-title">Streaks</div>
+          <div class="grid-card-sub">Current: 12 days 🔥</div>
+          <button class="grid-card-btn" style="--btn-bg:rgba(240,96,160,0.12);--btn-color:#f060a0" onclick="showToast('Streak details')">DETAILS</button>
+        </div>
+        <div class="grid-card">
+          <div class="grid-card-icon">🔔</div>
+          <div class="grid-card-title">Reminders</div>
+          <div class="grid-card-sub">3 active reminders</div>
+          <button class="grid-card-btn" style="--btn-bg:rgba(240,160,96,0.12);--btn-color:#f0a060" onclick="showToast('Managing reminders')">MANAGE</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav">
+      <button class="bottom-nav-item active" onclick="setBottomActive(this)">
+        <span class="bottom-nav-icon">🏠</span>Home
+      </button>
+      <button class="bottom-nav-item" onclick="setBottomActive(this);goToTrack()">
+        <span class="bottom-nav-icon">📹</span>Track
+      </button>
+      <button class="bottom-nav-item" onclick="setBottomActive(this)">
+        <span class="bottom-nav-icon">📈</span>Progress
+      </button>
+      <button class="bottom-nav-item" onclick="openProfile()">
+        <span class="bottom-nav-icon">👤</span>Profile
+      </button>
+    </div>
+
+  </div>
+
+//Profile
+  <div class="overlay" id="profileOverlay" onclick="closeProfile(event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="profile-avatar">😎</div>
+      <div class="profile-name">Alex Rivera</div>
+      <div class="profile-email">alex.rivera@email.com</div>
+      <div class="profile-stat-row">
+        <div class="profile-stat">
+          <div class="profile-stat-val">12</div>
+          <div class="profile-stat-lbl">Day Streak</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-val">4</div>
+          <div class="profile-stat-lbl">Active Goals</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-val">87%</div>
+          <div class="profile-stat-lbl">Completion</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeProfile()">Close</button>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
