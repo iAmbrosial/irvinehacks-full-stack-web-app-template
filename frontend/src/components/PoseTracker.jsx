@@ -5,6 +5,7 @@ import { Camera } from '@mediapipe/camera_utils';
 function PoseTracker() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const cameraRef = useRef(null); // stored so we can stop() it on unmount
   const [angle, setAngle] = useState(null); // 初始设为 null，方便判断是否显示
 
   const calculateAngle = (a, b, c) => {
@@ -110,7 +111,13 @@ function PoseTracker() {
         height: 480
       });
       camera.start();
+      cameraRef.current = camera;
     }
+
+    // stops the camera when the component unmounts (e.g. user navigates away).
+    return () => {
+      if (cameraRef.current) cameraRef.current.stop();
+    };
   }, []);
 
   return (
@@ -134,7 +141,9 @@ function PoseTracker() {
           transform: 'scaleX(-1)',
           border: '4px solid #00ffcc',
           borderRadius: '15px',
-          boxShadow: '0 0 20px rgba(0, 255, 204, 0.4)'
+          boxShadow: '0 0 20px rgba(0, 255, 204, 0.4)',
+          maxWidth: '100%',
+          height: 'auto',
         }}
       />
       <div style={{ marginTop: '10px', color: '#00ffcc', letterSpacing: '2px' }}>
