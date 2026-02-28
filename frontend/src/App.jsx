@@ -1,42 +1,26 @@
-import { useState } from "react";
-
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { Routes, Route } from "react-router-dom";
 import "./App.css";
 
-import RandomItem from "@/components/RandomItem";
+import HomePage from "@/pages/HomePage";
+import TrackerPage from "@/pages/TrackerPage";
+import SummaryPage from "@/pages/SummaryPage";
+import HelpPage from "@/pages/HelpPage";
 
 /*
-This is the starting point of our application. Here, we can begin coding 
-and transforming this page into whatever best suits our needs. 
-For example, we can start by creating a login page, home page, or an about section; 
-there are many ways to get your application up and running. 
-With App.jsx, we can also define global variables and routes to store information as well as page navigation.
+App.jsx is the root component of our application.
+We use React Router's <Routes> and <Route> to define which page component
+renders at each URL path. The <BrowserRouter> wrapper lives in main.jsx.
+
+useState is not needed here — each page manages its own state.
 */
 function App() {
-	const [count, setCount] = useState(0);
-
 	return (
-		<>
-			<div>
-				<a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank" rel="noreferrer">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-				<p>
-					Edit <code>src/App.jsx</code> and save to test HMR
-				</p>
-
-				<RandomItem maximum={1000} />
-			</div>
-			<p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-		</>
+		<Routes>
+			<Route path="/" element={<HomePage />} />
+			<Route path="/tracker" element={<TrackerPage />} />
+			<Route path="/summary" element={<SummaryPage />} />
+			<Route path="/help" element={<HelpPage />} />
+		</Routes>
 	);
 }
 
