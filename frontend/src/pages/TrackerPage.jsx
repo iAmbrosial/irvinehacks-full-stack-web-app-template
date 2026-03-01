@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PoseTracker from "../components/PoseTracker";
-import ExerciseSelector from "../components/tracker/ExerciseSelector";
 import { EXERCISES } from "@/utils/exercises";
 import Nav from "@/components/layout/Nav";
 
@@ -90,10 +89,7 @@ function TrackerPage() {
   {/* 我们临时不用那个可能坏掉的组件，直接用原生 select */}
   <select
     value={exerciseId}
-    onChange={(e) => {
-      console.log("选中的新动作:", e.target.value);
-      setExerciseId(e.target.value);
-    }}
+    onChange={(e) => setExerciseId(e.target.value)}
     style={{
       padding: "10px 20px",
       borderRadius: "10px",
