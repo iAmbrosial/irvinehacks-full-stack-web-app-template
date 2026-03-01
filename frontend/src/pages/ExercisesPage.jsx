@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { EXERCISES } from "@/utils/exercises";
 
-// ─────────────────────────────────────────────────────────────
-// SHARED NAV
-// ─────────────────────────────────────────────────────────────
+
 function Nav() {
   const location = useLocation();
   const navItems = [
@@ -66,9 +64,7 @@ const navStyles = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────
-// EXERCISE CARD
-// ─────────────────────────────────────────────────────────────
+
 function ExerciseCard({ exercise }) {
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false); // trails hovered for exit animation
