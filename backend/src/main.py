@@ -24,6 +24,8 @@ import api
 from squat_detector import SquatDetector
 from pydantic import BaseModel
 
+from fastapi.middleware.cors import CORSMiddleware
+
 class LandmarksInput(BaseModel):
     landmarks: list
 
@@ -31,7 +33,13 @@ PUBLIC_DIRECTORY = Path("public")
 
 # Create a main app under which the API will be mounted as a sub-app
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # 允许你的前端地址
+    allow_credentials=True,
+    allow_methods=["*"],  # 允许所有方法 (POST, GET, OPTIONS 等)
+    allow_headers=["*"],  # 允许所有请求头
+)
 # Send all requests to paths under `/api/*` to the API router
 app.mount("/api/", api.app)
 
