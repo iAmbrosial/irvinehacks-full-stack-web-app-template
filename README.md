@@ -1,68 +1,59 @@
-# Starter Pack Series: Full-Stack Web Application
+## Inspiration
 
-A single-page React application backed by FastAPI, ready to deploy on Render or Vercel.
+Hundreds of millions of newbies decide to take up the gym as a hobby every year. Millions of these people injure themselves in the process, but not from listing too heavy. Instead, they lift **wrong**. Many try their best to follow online tutorials but often find themselves committing a small mistake that can have severe consequences: a rounded back on a squat, knees caving on a lunge, and other similar movements. These are things that a personal trainer would catch instantly. The problem with that? Accessibility. Most people lift alone, with reasons ranging from tight finances to introvertedness, and fail to receive this type of immediate feedback. We wanted to build the closest thing to having a caring, knowledgeable coach with you at the click of a button – one that delivers accurate fixes without the pains of a personal trainer.
 
-[Create a new repository using this template](https://github.com/new?template_name=starter-pack-full-stack-web-app&template_owner=HackAtUCI)
-to get started.
+## What it does
 
-## Introduction
+FormCoach is a browser-based AI fitness coach that uses your device’s camera to analyze your exercise form in real time and provide insightful feedback. It:
 
-Welcome to the starter-pack series on full-stack web applications! This
-repository serves as an introduction to how full-stack web applications work
-and how to leverage frameworks to make it easier to build one.
+- Detects your body position frame-by-frame using computer vision without any wearables or special hardware requirements
+- Calculates angles and distances between your joints, creating a color-coded skeleton that is dynamically overlaid onto the user’s video feed – green is good, red is bad
+- Tracks session duration and exercise choice
+- Sends a summary to an AI support coach after each workout that returns personalized feedback: your strengths, weaknesses, the **most** important correction to make, and goals for the future
+- Includes a full exercise library with embedded tutorial videos and step-by-step instructions for myriad exercises that will continue to be expanded
 
-## What are Frontends and Backends?
+## How we built it
 
-A frontend is the software visible to a user such as what appears on a webpage,
-while a backend is the software running behind the scenes such as an endpoint
-providing the data that will eventually be shown on the webpage.
+The frontend was built using a combination of **React** and **Vite** to take advantage of their joint ability to handle complex UI logic and project infrastructure. **MediaPipe Pose** is used to achieve real-time landmark detection performance on the human body, and runs entirely in the browser via **WebAssembly**. This simultaneously keeps latency close to zero and protects user security. Additionally, the **HTML5 Canvas API** is used to draw the colored skeleton overlay on top of the user’s live camera feed on the fly. 
 
-Frontends for webpages generally consist of HTML, CSS, and JavaScript that come
-together to provide the user interface (UI) along with other visual assets.
-While you can code directly in those languages, JavaScript libraries such as React
-allow you to do the same faster and more efficiently.
+The backend of the project is supported by **FastAPI (Python)**. Whenever a workout ends, the frontend POSTs a structure summary (e.g., exercise type, duration, form scores, etc.) to the backend, allowing for the construction of a prompt that calls an *AI coach* to create personalized advice.
 
-Backends are much more flexible since all you need is a web server listening for
-different types of [HTTP requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
-on various routes (e.g. /user/info), each of which can perform its own action
-such as modifying a database or triggering another action.
-There are many libraries, such as FastAPI (Python) and Express (JavaScript) that make
-it easy to build special servers known as APIs which interact with a frontend client.
+Navigation across pages is handled using **React Router**.
 
-## What is a Full-Stack Web App?
+## Challenges we ran into
 
-With the rising popularity of single-page applications (SPAs), simple webpages can be
-made by keeping the frontend and backend in separate layers. This allows constructing
-a full-stack web application with a frontend UI client and a backend API server.
+1. **MediaPipe + Vite integration**
+    - Careful configuration was needed to load the WebAssembly model files through Vite’s module bundler, needing a large amount of trial and error in the process. This took careful coordination and analysis from multiple members of the team. 
+2. **Canvas coordinate mapping**
+    - The landmarks returned by MediaPipe are normalized to [0,1] coordinates relative to the video frame. Mapping these onto their correct positions on an absolutely positioned canvas required keeping the canvas’ internal pixel buffer separate from its display size – a task made even harder by the fact the canvas can be easily scaled using CSS.
+3. **Ghost landmark filtering**
+    - MediaPipe occasionally assigns low-confidence landmarks to empty space, creating landmarks which are essentially *ghosts* that entirely throws off the reading of the app. By adding visibility threshold checks (> 0.75) and boundary checks (y < 0.95), we were able to minimize the amount of these wrong angle readings used as real data.
+4. **Team Coordination**
+    - Coordinating the work of multiple people on a project is always difficult. It is made even harder by the frequent errors that are fundamental to the nature of programming and creating web applications. We often found ourselves working on the same component as another person through wildly different architectural approaches, leading to wasted time concentrated at the beginning of the hack. This was ultimately resolved by defining individual tasks and clear code architecture ownership boundaries.
 
-For example, let's say you're trying to access a profile page on some website, and the
-data is stored on a database somewhere. When the page loads, the client sends a request
-to the server which, in turn, retrieves the corresponding data from the database.
-The server then returns the data back to the client for the UI to display on the page.
-This interaction is just one example of how a frontend and backend can work together to
-provide a great and scalable experience for its users.
+## Accomplishments that we're proud of
 
-**Important:** You might be wondering why you couldn't just query the database directly
-from the frontend. Databases require sensitive credentials for access, and if you store
-those on the frontend, they _will_ be found no matter where you put them. Keeping them
-on the server is much more secure because they won't be visible to the frontend.
-This is relevant mainly for purely client-rendered applications: newer React frameworks
-such as [Next.js](https://nextjs.org) promote a model of server rendering which unifies
-the data fetching and rendering into one place for improved security and performance.
+1. Real-time joint angle calculations for webcams running at full rate in the browser without the need of a backend round-trip for vision processing
+2. A clean full-stack pipeline from the webcam stream → angle detection → workout session summary → LLM coached feedback → aesthetically pleasing UI cards
+3. A fully modular architecture featuring LLM prompting that is automatically enriched by form data highlighting all components of a user’s workout session, creating detailed feedback custom-tailored to the user and that particular session
 
-## This Application
+## What we learned
 
-This starter pack consists of a frontend UI made with [React](https://react.dev) and a
-backend API made with [FastAPI](https://fastapi.tiangolo.com).
+The hackathon taught us many different concepts in and out of programming. It challenged our ability to work together as a cohesive team only hours after our first meeting, and created an environment that pushed all of us to grow individually and collectively. Still, we learned a range of particular technical skills and frameworks:
 
-React is a JavaScript library for building composable and interactive components through
-JSX which is markup similar to HTML. These components can be efficiently rendered to the
-browser even as the data provided changes.
+1. Managing a browser-based machine learning machine that links together Mediapipe and WebAssembly, and how capable these frontend-based estimation models are without external GPU or server-side computational power
+2. The many different compositing modes (source-in, destination-atop, etc.) offered by the HTML5 Canvas API that enables sophisticated real-time visual effects with little lag
+3. Structuring LLM prompts built on concrete numeral data (joint angles, form scores) and prompt engineering to create actionable feedback rather than vague advice
 
-FastAPI is a Python framework for building APIs with simple functions and decorators.
-The framework is easy to use and also, as the name implies, very fast.
+## What's next for FormCoach
 
-For a deeper explanation on how the app is put together, please view the corresponding
-`README` files for the [frontend](frontend/README.md) and [backend](backend/README.md).
-
-For deploying this app to the internet, see [DEPLOYMENT.md](DEPLOYMENT.md).
+1. **Improved detection accuracy**
+    - Aim for a higher accuracy percentage when counting repetitions by better detecting the up/down phase transitions in each exercise
+2. **Increase available exercise-specific tracking**
+    - Increase the number of exercises for which there are available tracking using MediaPipe landmarks and mathematical formulas customized to each exercise
+3. **Fatigue detection**
+    - Track declining range of motion, increased joint jitter, and even changing facial expressions across exercise repetitions to determine early warning signs of fatigue
+4. **Personalized form targets**
+    - Adjust angle thresholds based on the user’s height and limb proportions, enabling better detection of metrics such as correct depth of an exercise
+5. **User profiles and gamification**
+    - Create user profiles to allow tracking of past workouts, historical trends, and other metrics to improve training – featuring achievement badges and levels
