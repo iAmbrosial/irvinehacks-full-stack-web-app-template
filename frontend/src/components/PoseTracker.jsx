@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pose } from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
-// 1. 导入你刚才写的发送函数
 import { sendPoseData } from '../services/PoseSocket';
 
 function PoseTracker() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [angle, setAngle] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(""); // 新增：用于给用户的视觉提示
 
-  // 2. 增加一个 Ref 来记录上次发送数据的时间，控制频率
   const lastSentTime = useRef(0);
 
   const calculateAngle = (a, b, c) => {
@@ -32,7 +31,6 @@ function PoseTracker() {
       minTrackingConfidence: 0.5
     });
 
-    // 3. 将回调函数改为 async，以便等待后端返回结果（可选）
     pose.onResults(async (results) => {
       if (!canvasRef.current) return;
       const canvasCtx = canvasRef.current.getContext('2d');
@@ -41,7 +39,7 @@ function PoseTracker() {
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, width, height);
 
-      // --- 绘制人体层 (保持你原来的逻辑) ---
+      // --- 绘制背景 (保持原逻辑) ---
       if (results.segmentationMask) {
         canvasCtx.drawImage(results.segmentationMask, 0, 0, width, height);
         canvasCtx.globalCompositeOperation = 'source-in';
@@ -57,6 +55,15 @@ function PoseTracker() {
       if (results.poseLandmarks) {
         const L = results.poseLandmarks;
 
+        // --- 核心校验逻辑：守门员功能 ---
+        // 核心点索引：11,12(肩), 23,24(胯), 25,26(膝), 27,28(踝)
+        const coreIndices = [11, 12, 23, 24, 25, 26, 27, 28];
+        const isBodyVisible = coreIndices.every(idx => {
+          const pt = L[idx];
+          // 1. 必须有数据 2. 可信度高于 0.6 3. Y 坐标在 0-1 之间（没出界）
+          return pt && pt.visibility > 0.6 && pt.y >= 0 && pt.y <= 1;
+        });
+
         // --- 角度计算 ---
         const kneeVisible  = L[26].visibility > 0.75 && L[26].y < 0.95;
         const ankleVisible = L[28].visibility > 0.75 && L[28].y < 0.95;
@@ -65,42 +72,45 @@ function PoseTracker() {
           : null;
         setAngle(curAngle);
 
-        // --- 4. 核心改动：打包并发送数据给后端 ---
+        // --- 数据发送控制 ---
         const now = Date.now();
-        // 每 100ms 发送一次，防止网络拥塞
         if (now - lastSentTime.current > 100) {
           lastSentTime.current = now;
 
-          const payload = {
-            session_id: "user_123_test",
-            fps: 30,
-            timestamp: now,
-            landmarks: L.map((lm, index) => ({
-              id: index,
-              x: lm.x,
-              y: lm.y,
-              z: lm.z,
-              visibility: lm.visibility
-            }))
-          };
+          if (isBodyVisible) {
+            setErrorMessage(""); // 数据合格，清除警告
+            const payload = {
+              session_id: "user_123_test",
+              fps: 30,
+              timestamp: now,
+              landmarks: L.map((lm, index) => ({
+                id: index,
+                x: lm.x,
+                y: lm.y,
+                z: lm.z,
+                visibility: lm.visibility
+              }))
+            };
 
-          // 异步发送，不阻塞画面渲染
-          sendPoseData(payload).then(response => {
-            if (response) {
-              // 如果后端返回了 AI 纠错建议，可以在这里处理
-              // console.log("AI反馈:", response);
-            }
-          });
+            sendPoseData(payload).then(response => {
+              if (response) {
+                // 后端处理后的结果可以在这里处理
+              }
+            });
+          } else {
+            // 数据不合格，不发给后端，并给用户提示
+            setErrorMessage("PLEASE STEP BACK: FULL BODY NOT IN VIEW");
+          }
         }
 
-        // --- 绘制骨骼连线 (保持你原来的逻辑) ---
+        // --- 绘制骨骼连线 ---
         const CONNECTIONS = [
           [11, 12], [11, 23], [12, 24], [23, 24],
           [23, 25], [25, 27], [24, 26], [26, 28],
           [11, 13], [13, 15], [12, 14], [14, 16]
         ];
 
-        canvasCtx.strokeStyle = (curAngle < 100) ? "#FF4D4D" : "#C8F060";
+        canvasCtx.strokeStyle = isBodyVisible ? ((curAngle < 100) ? "#FF4D4D" : "#C8F060") : "#666";
         canvasCtx.lineWidth = 5;
 
         CONNECTIONS.forEach(([startIdx, endIdx]) => {
@@ -112,12 +122,12 @@ function PoseTracker() {
           }
         });
 
-        // --- 绘制白色关节点 ---
+        // --- 绘制节点 ---
         L.forEach((pt, index) => {
           if (index > 10) {
             canvasCtx.beginPath();
             canvasCtx.arc(pt.x * width, pt.y * height, 5, 0, 2 * Math.PI);
-            canvasCtx.fillStyle = "white";
+            canvasCtx.fillStyle = pt.visibility > 0.6 ? "white" : "red"; // 看不清的点显示红色
             canvasCtx.fill();
           }
         });
@@ -136,13 +146,17 @@ function PoseTracker() {
 
   return (
     <div style={{ position: 'relative', width: '100%', textAlign: 'center', background: '#000' }}>
+      {/* 提示信息栏 */}
       <div style={{
         position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
-        background: 'rgba(0,0,0,0.8)', padding: '10px 24px', borderRadius: '50px',
-        border: '2px solid #C8F060', color: '#C8F060', fontSize: '20px', fontWeight: '800',
-        zIndex: 10, whiteSpace: 'nowrap',
+        background: errorMessage ? 'rgba(255, 77, 77, 0.9)' : 'rgba(0,0,0,0.8)',
+        padding: '10px 24px', borderRadius: '50px',
+        border: `2px solid ${errorMessage ? '#FF4D4D' : '#C8F060'}`,
+        color: errorMessage ? '#FFF' : '#C8F060',
+        fontSize: '18px', fontWeight: '800', zIndex: 10, whiteSpace: 'nowrap',
+        transition: 'all 0.3s ease'
       }}>
-        {angle !== null ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY..."}
+        {errorMessage || (angle !== null ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY...")}
       </div>
 
       <video ref={videoRef} style={{ display: 'none' }} />
