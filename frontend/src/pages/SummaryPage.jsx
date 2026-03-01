@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { analyzeWorkout } from "@/services/api";
+
 
 function SummaryPage() {
 	const location  = useLocation();
