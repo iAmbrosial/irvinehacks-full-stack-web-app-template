@@ -2,10 +2,9 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   background-color: #000;
-  overflow: hidden; /* 防止出现滚动条 */
 }
 
 /* 2. 这里的布局必须是相对定位，且占满全屏 */
