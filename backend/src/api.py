@@ -1,9 +1,7 @@
 import os
-import random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pathlib import Path
 
 # --- 1. 导入所有探测器类 ---
 from squat_detector import SquatDetector
@@ -78,9 +76,6 @@ EXERCISE_MAP = {
 # 存储 session_id_exercise -> Detector 实例
 _sessions: dict[str, object] = {}
 
-def is_visible(lm: dict, threshold: float = 0.75) -> bool:
-    return lm["visibility"] > threshold and lm["y"] < 0.95
-
 @app.post("/realtime-feedback", response_model=RealtimeResponse)
 async def realtime_feedback(data: RealtimeRequest) -> RealtimeResponse:
     lm = {pt.id: pt.model_dump() for pt in data.landmarks}
@@ -142,25 +137,50 @@ async def realtime_feedback(data: RealtimeRequest) -> RealtimeResponse:
 
 @app.post("/analyze-workout")
 async def analyze_workout(data: WorkoutSummary) -> dict:
-    """清理该 session 下的所有探测器缓存"""
+    # Clean up session detectors so the next session starts fresh
     prefix = f"{data.session_id}_"
-    keys_to_del = [k for k in _sessions.keys() if k.startswith(prefix)]
-    for k in keys_to_del:
+    for k in [k for k in list(_sessions.keys()) if k.startswith(prefix)]:
         del _sessions[k]
 
-    # 模拟 AI 响应逻辑 (保持你原来的代码即可)
+    # Build a structured, data-driven mock coaching response.
+    # Each section uses the actual session numbers so it reads as personalised
+    # even without a real LLM call.
+
+    # Section 1 — what they did well
+    if data.rep_count >= 10:
+        did_well = f"Excellent volume — {data.rep_count} reps of {data.exercise_name} in {data.duration_seconds}s shows real endurance."
+    elif data.rep_count >= 5:
+        did_well = f"Solid session: {data.rep_count} reps of {data.exercise_name} completed in {data.duration_seconds}s."
+    else:
+        did_well = f"Good start — {data.rep_count} reps of {data.exercise_name} in {data.duration_seconds}s. Every session builds the habit."
+
+    # Section 2 — most important correction (drawn from detected issues)
+    correction_map = {
+        "Go deeper into your squat.": "Focus on depth — squatting to 90° knee angle fully activates the glutes and reduces shear force on the knee joint.",
+        "Keep your chest up and avoid leaning forward.": "Brace your core and keep your torso more upright — excessive forward lean transfers load from your legs to your lower back.",
+        "Drive your knees outward — avoid knee collapse.": "Push your knees out in line with your toes — letting them cave inward stresses the ACL and medial knee ligaments.",
+        "Try to keep weight evenly distributed between both legs.": "Work on equal left/right loading — asymmetric squats overload one side and can lead to hip or knee imbalances over time.",
+    }
+    correction = "Maintain a steady tempo — control the descent for 2 seconds to build more muscle and protect your joints."
+    for issue in data.issues:
+        if issue in correction_map:
+            correction = correction_map[issue]
+            break
+
+    # Section 3 — measurable next-session target
+    next_target = f"Next session: aim for {data.rep_count + 2} reps with controlled 2-second descents."
+
+    message = f"{did_well}\n\n{correction}\n\n{next_target}"
+
     return {
         "summary": {
             "exercise_type": data.exercise_name,
             "total_reps": data.rep_count,
             "valid_reps": data.valid_reps,
-            "avg_accuracy_score": data.avg_accuracy_score,
         },
-        "ai_coaching": {
-            "message": f"Great job on your {data.exercise_name}! You completed {data.rep_count} reps."
-        }
+        "ai_coaching": {"message": message},
     }
 
-# 基础路由保持不变
+
 @app.get("/hello")
 async def hello(): return {"message": "Hello from FastAPI"}
