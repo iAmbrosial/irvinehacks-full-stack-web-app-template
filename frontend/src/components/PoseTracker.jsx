@@ -48,12 +48,13 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
     if (!liveFeedback) return;
     const now = Date.now();
     if (now - lastSpokenTime.current < SPEECH_COOLDOWN_MS) return;
-    
+
     lastSpokenTime.current = now;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(liveFeedback);
     utterance.rate = 1.1;
     window.speechSynthesis.speak(utterance);
+    return () => window.speechSynthesis.cancel();
   }, [liveFeedback]);
   // end of spoken feedback functionality (Comment out if buggy)
 
