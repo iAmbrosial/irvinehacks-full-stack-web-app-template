@@ -238,6 +238,9 @@ const styles = {
     fontFamily: "'Syne', sans-serif", fontWeight: 800,
     fontSize: 18, color: "#f0f0f0",
     whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
+    minWidth: "3ch",
+    textAlign: "center",
   },
   finishBtn: {
     padding: "8px 20px",
