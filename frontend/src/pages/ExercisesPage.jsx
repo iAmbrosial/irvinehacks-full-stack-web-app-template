@@ -2,30 +2,27 @@ import { useState, useEffect, useRef } from "react";
 import { EXERCISES } from "@/utils/exercises";
 import Nav from "@/components/layout/Nav";
 
+let lastCloseTime = 0;
+
 function ExerciseCard({ exercise }) {
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false);
   const closeTimer = useRef(null);
-  const openTimer = useRef(null);
 
   function open() {
+    if (Date.now() - lastCloseTime < 300) return;
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    openTimer.current = setTimeout(() => {
-      setHovered(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-    }, 200);
+    setHovered(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
   }
 
   function close() {
-    if (openTimer.current) clearTimeout(openTimer.current);
+    lastCloseTime = Date.now();
     setVisible(false);
     closeTimer.current = setTimeout(() => setHovered(false), 300);
   }
 
-  useEffect(() => () => {
-    clearTimeout(closeTimer.current);
-    clearTimeout(openTimer.current);
-  }, []);
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   return (
     <div style={{ position: "relative" }} onMouseEnter={open}>
