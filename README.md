@@ -60,4 +60,4 @@ The hackathon taught us many different concepts in and out of programming. It ch
 
 ## Where you can access it
 
-A deployed version of the site can be found at https://irvinehacks-formai.onrender.com/tracker.
+A deployed version of the site can be found at https://irvinehacks-formai.onrender.com.
