@@ -158,10 +158,10 @@ function HelpPage() {
                 color="#5865f2"
               />
               <SocialLink
-                href="https://github.com/iAmbrosial"
+                href="https://github.com/HackAtUCI"
                 icon="⌨️"
                 label="GitHub"
-                handle="https://github.com/iAmbrosial"
+                handle="https://github.com/HackAtUCI"
                 color="#ffc42e"
               />
             </div>
