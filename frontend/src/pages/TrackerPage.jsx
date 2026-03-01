@@ -213,6 +213,10 @@ const styles = {
     borderRadius: 16,
     border: "1px solid rgba(255,255,255,0.07)",
     flexWrap: "wrap",
+    position: "relative",
+    zIndex: 10,
+    flexShrink: 0,
+    
   },
   exerciseName: {
     fontFamily: "'Syne', sans-serif",
