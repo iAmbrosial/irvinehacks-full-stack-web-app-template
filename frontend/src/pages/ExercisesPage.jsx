@@ -1,70 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { EXERCISES } from "@/utils/exercises";
+import Nav from "@/components/layout/Nav";
 
 
-function Nav() {
-  const location = useLocation();
-  const navItems = [
-    { label: "Track", to: "/tracker" },
-    { label: "Exercises", to: "/exercises" },
-    { label: "Help", to: "/help" },
-  ];
 
-  return (
-    <nav style={navStyles.nav}>
-      <div style={navStyles.logo}>
-        <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
-          Form<span style={{ color: "#ffc42e" }}>AI</span>
-        </span>
-      </div>
-      <div style={navStyles.tabs}>
-        {navItems.map(({ label, to }) => {
-          const isActive = location.pathname === to;
-          return isActive ? (
-            <button key={label} style={{ ...navStyles.tab, ...navStyles.tabActive }}>{label}</button>
-          ) : (
-            <Link key={label} to={to} style={{ textDecoration: "none" }}>
-              <button style={navStyles.tab}>{label}</button>
-            </Link>
-          );
-        })}
-      </div>
-      <div style={{ marginLeft: "auto" }}>
-        <div style={navStyles.avatar}>🧑</div>
-      </div>
-    </nav>
-  );
-}
-
-const navStyles = {
-  nav: {
-    position: "sticky", top: 0, zIndex: 100,
-    background: "rgba(13,13,15,0.92)", backdropFilter: "blur(20px)",
-    borderBottom: "1px solid rgba(255,255,255,0.07)",
-    padding: "14px clamp(20px, 5vw, 60px)",
-    display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center",
-  },
-  logo: { display: "flex", alignItems: "center" },
-  tabs: {
-    display: "flex", gap: 6, background: "#1e1e23", padding: 4,
-    borderRadius: 50, border: "1px solid rgba(255,255,255,0.07)",
-  },
-  tab: {
-    padding: "7px 16px", borderRadius: 50, border: "none", cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500,
-    color: "#666", background: "transparent", whiteSpace: "nowrap",
-  },
-  tabActive: { background: "#ffc42e", color: "#0d0d0f", fontWeight: 600, cursor: "default" },
-  avatar: {
-    width: 36, height: 36, borderRadius: "50%",
-    background: "linear-gradient(135deg, #ffc42e, #60d4f0)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 15, marginLeft: "auto",
-  },
-};
-
-
+// ─────────────────────────────────────────────────────────────
+// EXERCISE CARD
+// ─────────────────────────────────────────────────────────────
 function ExerciseCard({ exercise }) {
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false); // trails hovered for exit animation
@@ -149,7 +92,7 @@ function ExerciseCard({ exercise }) {
               <ul style={cardStyles.tipList}>
                 {exercise.tips.map((tip, i) => (
                   <li key={i} style={cardStyles.tipItem}>
-                    <span style={cardStyles.tipDot}>{i + 1}</span>{tip}
+                    <span style={cardStyles.tipDot}>⚠</span>{tip}
                   </li>
                 ))}
               </ul>

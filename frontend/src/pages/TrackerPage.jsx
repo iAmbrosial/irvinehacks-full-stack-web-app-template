@@ -3,22 +3,8 @@ import { useNavigate } from "react-router-dom";
 import PoseTracker from "../components/PoseTracker";
 import ExerciseSelector from "../components/tracker/ExerciseSelector";
 import { EXERCISES } from "@/utils/exercises";
+import Nav from "@/components/layout/Nav";
 
-/*
-TrackerPage — the core workout page.
-
-Flow:
-  1. Pre-session: user picks an exercise, clicks "Start Workout"
-  2. Active session: PoseTracker runs, backend returns reps + form feedback
-  3. On "Finish Workout": build a WorkoutSummary and navigate to /summary
-     with sessionData in router state (no localStorage needed)
-
-State design:
-  - repCount / formIssues are driven by PoseTracker via the onRepComplete callback
-  - elapsed time is tracked locally with setInterval
-  - sessionId is a timestamp string — unique per session, used to key the
-    backend SquatDetector so rep count doesn't bleed across sessions
-*/
 function TrackerPage() {
   const [exerciseId, setExerciseId] = useState(EXERCISES[0].id);
   const [sessionActive, setSessionActive] = useState(false);
@@ -26,10 +12,16 @@ function TrackerPage() {
   const [elapsed, setElapsed]       = useState(0);
   const [repCount, setRepCount]     = useState(0);
   const [formIssues, setFormIssues] = useState([]);
-  const sessionIdRef = useRef(null); // stable across renders during a session
+  const sessionIdRef = useRef(null);
   const navigate = useNavigate();
 
-  // Live timer — ticks every second while session is active
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+
   useEffect(() => {
     if (!sessionActive) return;
     const interval = setInterval(() => {
@@ -47,12 +39,8 @@ function TrackerPage() {
     setSessionActive(true);
   };
 
-  // Called by PoseTracker every time the backend counts a completed rep.
-  // useCallback keeps the reference stable so PoseTracker doesn't need to
-  // re-initialize MediaPipe when this parent component re-renders.
   const handleRepComplete = useCallback(({ repCount: newCount, formIssues: newIssues }) => {
     setRepCount(newCount);
-    // Accumulate unique issues across all reps (deduped for the LLM prompt)
     setFormIssues((prev) => {
       const merged = new Set([...prev, ...newIssues]);
       return [...merged];
@@ -62,79 +50,66 @@ function TrackerPage() {
   const handleFinish = () => {
     const exercise = EXERCISES.find((e) => e.id === exerciseId);
     const durationSeconds = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
-
-    // Build the WorkoutSummary shape expected by POST /analyze-workout
     const sessionData = {
       session_id: sessionIdRef.current ?? "anonymous",
       exercise_id: exerciseId,
       exercise_name: exercise?.name ?? exerciseId,
       duration_seconds: durationSeconds,
       rep_count: repCount,
-      valid_reps: repCount,   // SquatDetector only counts reps that complete full range
-      avg_accuracy_score: 0,  // placeholder until scoring logic is added
+      valid_reps: repCount,
+      avg_accuracy_score: 0,
       issues: formIssues,
-      // Camelcase aliases used by SummaryPage display
       exerciseId,
       exerciseName: exercise?.name ?? exerciseId,
       durationSeconds,
     };
-
     setSessionActive(false);
     navigate("/summary", { state: { sessionData } });
   };
 
   return (
-    <div style={{
-      backgroundColor: "#000", minHeight: "100vh", color: "white",
-      display: "flex", flexDirection: "column", alignItems: "center",
-    }}>
-      <h2 style={{ marginBottom: "8px" }}>AI Trainer</h2>
+    <div style={styles.page}>
+      <Nav />
 
-      {/* ── Pre-session ── */}
+
       {!sessionActive ? (
-        <div style={{ textAlign: "center", marginTop: "80px" }}>
-          <div style={{ fontSize: "50px" }}>📷</div>
-          <p>Choose an exercise and allow camera access to start tracking.</p>
+        <div style={styles.presession}>
+          <div style={styles.cameraIcon}>📷</div>
+          <h2 style={styles.presessionTitle}>Ready to Train?</h2>
+          <p style={styles.presessionSub}>
+            Choose an exercise and allow camera access to start tracking.
+          </p>
 
-          <ExerciseSelector
-            value={exerciseId}
-            onChange={(e) => setExerciseId(e.target.value)}
-          />
+          <div style={styles.selectorWrap}>
+            <ExerciseSelector
+              value={exerciseId}
+              onChange={(e) => setExerciseId(e.target.value)}
+            />
+          </div>
 
-          <button
-            onClick={handleStart}
-            style={{
-              marginTop: "16px",
-              backgroundColor: "#d4ff70", color: "black",
-              padding: "10px 28px", borderRadius: "20px",
-              border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px",
-            }}
-          >
-            Start Workout
+          <button onClick={handleStart} style={styles.startBtn}>
+            Start Workout →
           </button>
         </div>
       ) : (
-        /* ── Active session ── */
-        <div style={{ width: "90%", maxWidth: "800px", marginTop: "12px" }}>
-          {/* Session stats bar */}
-          <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            marginBottom: "10px", padding: "8px 16px",
-            backgroundColor: "#111", borderRadius: "12px",
-          }}>
-            <span style={{ color: "#d4ff70", fontWeight: "bold" }}>
+
+        <div style={styles.activeSession}>
+          {/* Stats bar */}
+          <div style={styles.statsBar}>
+            <span style={styles.exerciseName}>
               {EXERCISES.find((e) => e.id === exerciseId)?.name}
             </span>
-            <span>{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}</span>
-            <span>Reps: {repCount}</span>
-            <button
-              onClick={handleFinish}
-              style={{
-                backgroundColor: "#ff4d4d", color: "white",
-                padding: "6px 18px", borderRadius: "16px",
-                border: "none", cursor: "pointer", fontWeight: "bold",
-              }}
-            >
+            <div style={styles.statItem}>
+              <span style={styles.statLabel}>TIME</span>
+              <span style={styles.statVal}>
+                {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+              </span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statLabel}>REPS</span>
+              <span style={styles.statVal}>{repCount}</span>
+            </div>
+            <button onClick={handleFinish} style={styles.finishBtn}>
               Finish
             </button>
           </div>
@@ -149,5 +124,97 @@ function TrackerPage() {
     </div>
   );
 }
+
+const styles = {
+  page: {
+    backgroundColor: "#0d0d0f",
+    minHeight: "100vh",
+    color: "white",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+
+
+  presession: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 20px",
+    gap: 16,
+  },
+  cameraIcon: { fontSize: 56, opacity: 0.5 },
+  presessionTitle: {
+    fontFamily: "'Syne', sans-serif",
+    fontWeight: 800, fontSize: 32,
+    color: "#f0f0f0", margin: 0,
+  },
+  presessionSub: {
+    fontSize: 15, color: "rgba(240,240,240,0.5)",
+    fontFamily: "'DM Sans', sans-serif", textAlign: "center",
+    maxWidth: 320, margin: 0,
+  },
+  selectorWrap: { marginTop: 8 },
+  startBtn: {
+    marginTop: 8,
+    padding: "14px 36px",
+    borderRadius: 50,
+    background: "#ffc42e",
+    color: "#0d0d0f",
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "'Syne', sans-serif",
+    fontWeight: 700,
+    fontSize: 16,
+    boxShadow: "0 4px 24px rgba(255,196,46,0.3)",
+  },
+
+
+  activeSession: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    padding: "12px clamp(12px, 3vw, 32px) 16px",
+    gap: 12,
+  },
+  statsBar: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    padding: "10px 20px",
+    background: "#1e1e23",
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.07)",
+    flexWrap: "wrap",
+  },
+  exerciseName: {
+    fontFamily: "'Syne', sans-serif",
+    fontWeight: 800, fontSize: 15,
+    color: "#ffc42e", flex: 1,
+  },
+  statItem: {
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+  },
+  statLabel: {
+    fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
+    color: "#666", fontFamily: "'DM Sans', sans-serif",
+  },
+  statVal: {
+    fontFamily: "'Syne', sans-serif", fontWeight: 800,
+    fontSize: 18, color: "#f0f0f0",
+  },
+  finishBtn: {
+    padding: "8px 20px",
+    borderRadius: 50,
+    background: "rgba(255,77,77,0.15)",
+    border: "1px solid rgba(255,77,77,0.4)",
+    color: "#ff4d4d",
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 700, fontSize: 13,
+    cursor: "pointer",
+  },
+};
 
 export default TrackerPage;
