@@ -16,7 +16,7 @@ renders at each URL path. The <BrowserRouter> wrapper lives in main.jsx.
 function App() {
 	return (
 		<div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-			<Navbar />
+			
 			<Routes>
 				<Route path="/" element={<HomePage />} />
 				<Route path="/tracker" element={<TrackerPage />} />
