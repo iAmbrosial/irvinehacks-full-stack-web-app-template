@@ -53,7 +53,16 @@ function PoseTracker() {
 
       if (results.poseLandmarks) {
         const L = results.poseLandmarks;
-        const curAngle = calculateAngle(L[24], L[26], L[28]);
+
+        // Only calculate angle when the right knee and ankle are clearly visible.
+        // Without this check, low-confidence ghost points produce nonsense angles.
+        // Thresholds: visibility > 0.75 (confident detection) and y < 0.95
+        // (landmark not clipped at the very bottom edge of the frame).
+        const kneeVisible  = L[26].visibility > 0.75 && L[26].y < 0.95;
+        const ankleVisible = L[28].visibility > 0.75 && L[28].y < 0.95;
+        const curAngle = (kneeVisible && ankleVisible)
+          ? calculateAngle(L[24], L[26], L[28])
+          : null;
         setAngle(curAngle);
 
         // --- 2. 绘制全套骨骼连线 ---
@@ -99,18 +108,33 @@ function PoseTracker() {
   }, []);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ marginBottom: '20px', background: 'rgba(0,0,0,0.8)', padding: '15px 30px', borderRadius: '50px', border: '2px solid #C8F060', color: '#C8F060', fontSize: '24px', fontWeight: '800' }}>
-        {angle ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY..."}
+    /*
+      position: relative so the angle overlay (position: absolute) anchors
+      to this container instead of the viewport.
+      width: 100% lets the parent (TrackerPage) control the display size.
+    */
+    <div style={{ position: 'relative', width: '100%', textAlign: 'center', background: '#000' }}>
+      {/* Angle readout — floats over the top-center of the canvas */}
+      <div style={{
+        position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+        background: 'rgba(0,0,0,0.8)', padding: '10px 24px', borderRadius: '50px',
+        border: '2px solid #C8F060', color: '#C8F060', fontSize: '20px', fontWeight: '800',
+        zIndex: 10, whiteSpace: 'nowrap',
+      }}>
+        {angle !== null ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY..."}
       </div>
+
       <video ref={videoRef} style={{ display: 'none' }} />
-      <canvas ref={canvasRef} width="640" height="480" style={{ transform: 'scaleX(-1)', borderRadius: '20px', boxShadow: '0 0 30px rgba(200, 240, 96, 0.2)' }} />
-      <button
-        onClick={() => window.location.pathname = '/dash.html'}
-        style={{ marginTop: '20px', padding: '10px 25px', borderRadius: '10px', background: '#C8F060', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
-      >
-        BACK TO DASHBOARD
-      </button>
+      {/*
+        width/height attributes = internal pixel buffer (must stay at 640×480).
+        maxWidth/height:auto = CSS display size, scales down on narrow screens.
+      */}
+      <canvas
+        ref={canvasRef}
+        width="640"
+        height="480"
+        style={{ transform: 'scaleX(-1)', borderRadius: '20px', boxShadow: '0 0 30px rgba(200, 240, 96, 0.2)', maxWidth: '100%', height: 'auto' }}
+      />
     </div>
   );
 }
