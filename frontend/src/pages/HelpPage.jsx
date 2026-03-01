@@ -144,21 +144,21 @@ function HelpPage() {
             </p>
             <div style={helpStyles.socialGrid}>
               <SocialLink
-                href="https://instagram.com"
+                href="https://instagram.com/hackatuci"
                 icon="📸"
                 label="Instagram"
                 handle="@hackatuci"
                 color="#e1306c"
               />
               <SocialLink
-                href="https://discord.gg"
+                href="https://discord.com/invite/2gZjQMjKeF"
                 icon="💬"
                 label="Discord"
                 handle="discord.gg/hackatuci"
                 color="#5865f2"
               />
               <SocialLink
-                href="https://github.com"
+                href="https://github.com/iAmbrosial"
                 icon="⌨️"
                 label="GitHub"
                 handle="https://github.com/iAmbrosial"
