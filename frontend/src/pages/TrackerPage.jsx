@@ -222,17 +222,22 @@ const styles = {
     fontFamily: "'Syne', sans-serif",
     fontWeight: 800, fontSize: 15,
     color: "#ffc42e", flex: 1,
+    minWidth: 0, overflow: "hidden",
+    textOverflow: "ellipsis", whiteSpace: "nowrap",
   },
   statItem: {
     display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+    flexShrink: 0,
   },
   statLabel: {
     fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
     color: "#666", fontFamily: "'DM Sans', sans-serif",
+    whiteSpace: "nowrap",
   },
   statVal: {
     fontFamily: "'Syne', sans-serif", fontWeight: 800,
     fontSize: 18, color: "#f0f0f0",
+    whiteSpace: "nowrap",
   },
   finishBtn: {
     padding: "8px 20px",
@@ -243,6 +248,8 @@ const styles = {
     fontFamily: "'DM Sans', sans-serif",
     fontWeight: 700, fontSize: 13,
     cursor: "pointer",
+    flexShrink: 0,
+    whiteSpace: "nowrap",
   },
 };
 
