@@ -86,12 +86,32 @@ function TrackerPage() {
             Choose an exercise and allow camera access to start tracking.
           </p>
 
-          <div style={styles.selectorWrap}>
-            <ExerciseSelector
-              value={exerciseId}
-              onChange={(e) => setExerciseId(e.target.value)}
-            />
-          </div>
+        <div style={styles.selectorWrap}>
+  {/* 我们临时不用那个可能坏掉的组件，直接用原生 select */}
+  <select
+    value={exerciseId}
+    onChange={(e) => {
+      console.log("选中的新动作:", e.target.value);
+      setExerciseId(e.target.value);
+    }}
+    style={{
+      padding: "10px 20px",
+      borderRadius: "10px",
+      background: "#1e1e23",
+      color: "#ffc42e",
+      border: "1px solid rgba(255,196,46,0.3)",
+      fontSize: "16px",
+      outline: "none",
+      cursor: "pointer"
+    }}
+  >
+    {/* 必须确保这里的 value 和后端 api.py 里的字典 Key 一模一样 */}
+    <option value="Squat">Squat</option>
+    <option value="Push-Up">Push-Up</option>
+    <option value="Forward Lunge">Forward Lunge</option>
+    <option value="Plank">Plank</option>
+  </select>
+</div>
 
           <button onClick={handleStart} style={styles.startBtn}>
             Start Workout →

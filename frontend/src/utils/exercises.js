@@ -2,7 +2,7 @@
 
 export const EXERCISES = [
 	{
-		id: "squat",
+		id: "Squat",
 		name: "Squat",
 		muscles: ["Quads", "Glutes", "Hamstrings", "Core"],
 		videoId: "my0tLDaWyDU", // "How To Squat Correctly (NO BACK PAIN)" – Squat University
@@ -21,7 +21,7 @@ export const EXERCISES = [
 		],
 	},
 	{
-		id: "lunge",
+		id: "Forward Lunge",
 		name: "Forward Lunge",
 		muscles: ["Quads", "Glutes", "Hamstrings", "Calves"],
 		videoId: "ASdqJoDPMHA", // "HOW TO DO A LUNGE / LUNGES FOR BEGINNERS" – Fitness for Transformation
@@ -39,7 +39,7 @@ export const EXERCISES = [
 		],
 	},
 	{
-		id: "pushup",
+		id: "Push-Up",
 		name: "Push-Up",
 		muscles: ["Chest", "Triceps", "Shoulders", "Core"],
 		videoId: "IODxDxX7oi4", // "The Perfect Push Up | Do it right!" — Calisthenicmovement
@@ -57,7 +57,7 @@ export const EXERCISES = [
 		],
 	},
 	{
-		id: "plank",
+		id: "Plank",
 		name: "Plank",
 		muscles: ["Core", "Shoulders", "Glutes"],
 		videoId: "pSHjTRCQxIw", // "How To: Plank" — ScottHermanFitness
