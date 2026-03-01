@@ -11,7 +11,6 @@ is placed at the public directory defined below for FastAPI to serve as static a
 That means any requests for existing files will be served the contents of those files,
 and any requests for the API paths will be sent to the API routes defined in the API.
 """
-
 from pathlib import Path
 
 from fastapi import FastAPI, Request, status

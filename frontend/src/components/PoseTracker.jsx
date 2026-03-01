@@ -5,6 +5,22 @@ import { sendPoseData } from '../services/PoseSocket';
 
 /*
 PoseTracker — live webcam + MediaPipe pose overlay.
+
+Props:
+  exercise      (string) - exercise ID sent to backend, e.g. "squat". Default "squat".
+  sessionId     (string) - unique ID for this session. Used to key the backend's
+                           SquatDetector instance so reps accumulate correctly.
+  onRepComplete (fn)     - called whenever the backend signals a rep was completed.
+                           Receives: { repCount, formIssues }
+                           TrackerPage uses this to build the post-session WorkoutSummary.
+
+Architecture note:
+  PoseTracker owns the full webcam pipeline (hidden <video> → MediaPipe Camera →
+  pose.onResults → canvas draw). The Camera utility from @mediapipe/camera_utils
+  handles getUserMedia and the frame loop internally.
+
+  Canvas has fixed internal dimensions (640×480) for coordinate math. CSS
+  maxWidth:100%/height:auto scales it responsively without affecting coordinates.
 */
 function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComplete }) {
   const videoRef = useRef(null);
@@ -15,6 +31,7 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
   const [angle, setAngle] = useState(null);
   const [liveReps, setLiveReps] = useState(0);
   const [liveFeedback, setLiveFeedback] = useState("");
+  const [errorMessage, setErrorMessage] = useState(""); // 新增：用于给用户的视觉提示
 
   const calculateAngle = (a, b, c) => {
     const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -60,6 +77,14 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
       if (results.poseLandmarks) {
         const L = results.poseLandmarks;
 
+        // 核心点索引：11,12(肩), 23,24(胯), 25,26(膝), 27,28(踝)
+        const coreIndices = [11, 12, 23, 24, 25, 26, 27, 28];
+        const isBodyVisible = coreIndices.every(idx => {
+          const pt = L[idx];
+          // 1. 必须有数据 2. 可信度高于 0.6 3. Y 坐标在 0-1 之间（没出界）
+          return pt && pt.visibility > 0.6 && pt.y >= 0 && pt.y <= 1;
+        });
+
         // Local angle display (right knee) — for the visual overlay
         const kneeVisible  = L[26].visibility > 0.75 && L[26].y < 0.95;
         const ankleVisible = L[28].visibility > 0.75 && L[28].y < 0.95;
@@ -71,23 +96,26 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
         // Send to backend every 100ms (≈10 Hz) — fast enough for rep counting,
         // slow enough not to saturate the server.
         const now = Date.now();
+        // 每 100ms 发送一次，防止网络拥塞
         if (now - lastSentTime.current > 100) {
           lastSentTime.current = now;
 
-          const payload = {
-            session_id: sessionId,
-            fps: 30,
-            timestamp: now,
-            exercise: exercise,
+          if (isBodyVisible) {
+            setErrorMessage(""); // 数据合格，清除警告
+            const payload = {
+              session_id: sessionId,
+              fps: 30,
+              timestamp: now,
+              exercise: exercise,
             landmarks: L.map((lm, index) => ({
-              id: index,
-              name: "",       // MediaPipe JS doesn't expose landmark names
+                id: index,
+                name: "",       // MediaPipe JS doesn't expose landmark names
               x: lm.x,
-              y: lm.y,
-              z: lm.z,
-              visibility: lm.visibility,
-            })),
-          };
+                y: lm.y,
+                z: lm.z,
+                visibility: lm.visibility,
+              })),
+            };
 
           sendPoseData(payload).then((response) => {
             if (!response) return;
@@ -116,7 +144,7 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
           [11, 13], [13, 15], [12, 14], [14, 16],
         ];
 
-        canvasCtx.strokeStyle = (curAngle !== null && curAngle < 100) ? "#FF4D4D" : "#C8F060";
+        canvasCtx.strokeStyle = isBodyVisible ? ((curAngle < 100) ? "#FF4D4D" : "#C8F060") : "#666";
         canvasCtx.lineWidth = 5;
 
         CONNECTIONS.forEach(([startIdx, endIdx]) => {
@@ -160,12 +188,16 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
       {/* Angle + rep count overlay */}
       <div style={{
         position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
-        background: 'rgba(0,0,0,0.8)', padding: '10px 24px', borderRadius: '50px',
-        border: '2px solid #C8F060', color: '#C8F060', fontSize: '18px', fontWeight: '800',
-        zIndex: 10, whiteSpace: 'nowrap', display: 'flex', gap: '20px',
+        background: errorMessage ? 'rgba(255, 77, 77, 0.9)' : 'rgba(0,0,0,0.8)',
+        padding: '10px 24px', borderRadius: '50px',
+        border: `2px solid ${errorMessage ? '#FF4D4D' : '#C8F060'}`,
+        color: errorMessage ? '#FFF' : '#C8F060',
+        fontSize: '18px', fontWeight: '800', zIndex: 10, whiteSpace: 'nowrap',
+        transition: 'all 0.3s ease', display: 'flex', gap: '20px'
       }}>
         <span>{angle !== null ? `${angle}°` : "SCANNING..."}</span>
         <span>Reps: {liveReps}</span>
+        {errorMessage || (angle !== null ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY...")}
       </div>
 
       {/* Live feedback cue from backend SquatDetector */}
