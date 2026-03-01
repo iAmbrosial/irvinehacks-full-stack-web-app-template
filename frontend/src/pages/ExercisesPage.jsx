@@ -6,19 +6,26 @@ function ExerciseCard({ exercise }) {
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false);
   const closeTimer = useRef(null);
+  const openTimer = useRef(null);
 
   function open() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    setHovered(true);
-    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+    openTimer.current = setTimeout(() => {
+      setHovered(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+    }, 200);
   }
 
   function close() {
+    if (openTimer.current) clearTimeout(openTimer.current);
     setVisible(false);
     closeTimer.current = setTimeout(() => setHovered(false), 300);
   }
 
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(closeTimer.current);
+    clearTimeout(openTimer.current);
+  }, []);
 
   return (
     <div style={{ position: "relative" }} onMouseEnter={open}>
