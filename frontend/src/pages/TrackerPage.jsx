@@ -226,8 +226,8 @@ const styles = {
     textOverflow: "ellipsis", whiteSpace: "nowrap",
   },
   statItem: {
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-    flexShrink: 0,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+    flexShrink: 0, padding: "4px 8px",
   },
   statLabel: {
     fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
