@@ -6,6 +6,7 @@ import { EXERCISES } from "@/utils/exercises";
 import Nav from "@/components/layout/Nav";
 
 function TrackerPage() {
+  const [visible, setVisible] = useState(false);
   const [exerciseId, setExerciseId] = useState(EXERCISES[0].id);
   const [sessionActive, setSessionActive] = useState(false);
   const [startTime, setStartTime]   = useState(null);
@@ -18,7 +19,8 @@ function TrackerPage() {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    const t = setTimeout(() => setVisible(true), 60);
+    return () => { document.body.style.overflow = ""; clearTimeout(t); };
   }, []);
 
 
@@ -71,9 +73,13 @@ function TrackerPage() {
     <div style={styles.page}>
       <Nav />
 
-
       {!sessionActive ? (
-        <div style={styles.presession}>
+        <div style={{
+          ...styles.presession,
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(18px)",
+          transition: "opacity 0.6s ease, transform 0.6s ease",
+        }}>
           <div style={styles.cameraIcon}>📷</div>
           <h2 style={styles.presessionTitle}>Ready to Train?</h2>
           <p style={styles.presessionSub}>
@@ -170,7 +176,6 @@ const styles = {
     fontSize: 16,
     boxShadow: "0 4px 24px rgba(255,196,46,0.3)",
   },
-
 
   activeSession: {
     flex: 1,

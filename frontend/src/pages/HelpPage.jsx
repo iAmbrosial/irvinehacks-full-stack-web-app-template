@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Nav from "@/components/layout/Nav";
 
 
@@ -21,12 +22,25 @@ function SocialLink({ href, icon, label, handle, color }) {
 }
 
 function HelpPage() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 60);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div style={helpStyles.page}>
       <Nav />
-      <div style={helpStyles.content}>
+      <div style = {helpStyles.scrollArea}>
+      <div style={{
+        ...helpStyles.content,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(18px)",
+        transition: "opacity 0.6s ease, transform 0.6s ease",
+      }}>
 
-        {/* ── Hero ── */}
+
         <div style={helpStyles.heroSection}>
           <div style={helpStyles.badge}>
             <span style={helpStyles.badgeDot} />
@@ -42,8 +56,8 @@ function HelpPage() {
 
         <div style={helpStyles.grid}>
 
-          {/* ── Getting Started ── */}
-          <div style={{ ...helpStyles.card, gridColumn: "1 / -1" }}>
+ 
+         <div style={{ ...helpStyles.card, gridColumn: "1 / -1" }}>
             <div style={helpStyles.cardHeader}>
               <h2 style={helpStyles.cardTitle}>Getting Started</h2>
             </div>
@@ -71,7 +85,6 @@ function HelpPage() {
 
           <div style={helpStyles.card}>
             <div style={helpStyles.cardHeader}>
-              <span style={helpStyles.cardIcon}>📚</span>
               <h2 style={helpStyles.cardTitle}>Exercise Library</h2>
             </div>
             <p style={helpStyles.cardText}>
@@ -84,7 +97,7 @@ function HelpPage() {
 
           <div style={helpStyles.card}>
             <div style={helpStyles.cardHeader}>
-              <span style={helpStyles.cardIcon}>🤖</span>
+
               <h2 style={helpStyles.cardTitle}>AI Feedback</h2>
             </div>
             <p style={helpStyles.cardText}>
@@ -100,7 +113,7 @@ function HelpPage() {
 
           <div style={{ ...helpStyles.card, gridColumn: "1 / -1" }}>
             <div style={helpStyles.cardHeader}>
-              <span style={helpStyles.cardIcon}>💡</span>
+
               <h2 style={helpStyles.cardTitle}>Tips for Best Results</h2>
             </div>
             <div style={helpStyles.tipGrid}>
@@ -110,7 +123,7 @@ function HelpPage() {
                 { icon: "👕", text: "Wear fitted clothing so the AI can clearly see your body outline." },
                 { icon: "🔄", text: "Try a side-on angle for squats and lunges, front-facing for presses." },
                 { icon: "📱", text: "Prop your phone on a shelf or tripod for hands-free analysis." },
-                { icon: "🎯", text: "Analyze one rep at a time for the most detailed, accurate feedback." },
+                { icon: "🎯", text: "Analyze a few reps at a time for vocal feedback" },
               ].map((t, i) => (
                 <div key={i} style={helpStyles.tipItem}>
                   <span style={{ fontSize: 20 }}>{t.icon}</span>
@@ -120,40 +133,40 @@ function HelpPage() {
             </div>
           </div>
 
-          {/* ── Community ── */}
+
           <div style={{ ...helpStyles.card, gridColumn: "1 / -1" }}>
             <div style={helpStyles.cardHeader}>
-              <span style={helpStyles.cardIcon}>🌐</span>
+
               <h2 style={helpStyles.cardTitle}>Community & Links</h2>
             </div>
             <p style={{ ...helpStyles.cardText, marginBottom: 20 }}>
-              Join the FormAI community, follow updates, and contribute to the project.
+              Thank you Hack at UCI!!
             </p>
             <div style={helpStyles.socialGrid}>
               <SocialLink
                 href="https://instagram.com"
                 icon="📸"
                 label="Instagram"
-                handle="@formai.app"
+                handle="@hackatuci"
                 color="#e1306c"
               />
               <SocialLink
                 href="https://discord.gg"
                 icon="💬"
                 label="Discord"
-                handle="discord.gg/formai"
+                handle="discord.gg/hackatuci"
                 color="#5865f2"
               />
               <SocialLink
                 href="https://github.com"
                 icon="⌨️"
                 label="GitHub"
-                handle="github.com/formai"
+                handle="https://github.com/iAmbrosial"
                 color="#ffc42e"
               />
             </div>
           </div>
-
+</div>
         </div>
       </div>
     </div>
@@ -161,8 +174,9 @@ function HelpPage() {
 }
 
 const helpStyles = {
-  page: { minHeight: "100vh", background: "#0d0d0f", display: "flex", flexDirection: "column" },
-  content: { padding: "40px clamp(20px, 5vw, 60px) 80px", flex: 1, maxWidth: 1100, margin: "0 auto", width: "100%" },
+  page: { height : "100vh", background: "#0d0d0f", display: "flex", flexDirection: "column", overflow: "hidden" },
+  scrollArea: {flex:1, minHeight: 0, overflowY: "auto"},
+  content: { padding: "40px clamp(20px, 5vw, 60px) 80px", flex: 1,minHeight:0,  maxWidth: 1100, margin: "0 auto", width: "100%", boxSizing: "border-box" },
 
   heroSection: { marginBottom: 40 },
   badge: {
