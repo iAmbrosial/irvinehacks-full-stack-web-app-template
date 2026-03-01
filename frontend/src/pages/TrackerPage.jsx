@@ -216,6 +216,7 @@ const styles = {
     position: "relative",
     zIndex: 10,
     flexShrink: 0,
+    
   },
   exerciseName: {
     fontFamily: "'Syne', sans-serif",
