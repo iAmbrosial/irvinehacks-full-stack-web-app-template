@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-
+import { sendPoseData } from "../services/PoseSocket";
 
 function SummaryPage() {
 	const location  = useLocation();
