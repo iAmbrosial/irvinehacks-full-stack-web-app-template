@@ -12,6 +12,7 @@ function SummaryPage() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    document.body.style.overflow = "";
     const t = setTimeout(() => setVisible(true), 60);
     return () => clearTimeout(t);
   }, []);
