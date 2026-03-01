@@ -14,18 +14,12 @@
  */
 export const sendPoseData = async (poseData) => {
   try {
-    // 💡 这里的地址要改成你队友后端跑的地址（比如 http://localhost:8000/process）
-    const BACKEND_URL = "http://localhost:8000/process_pose";
-
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch("/api/realtime-feedback", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // 2. 队友后端只定义了 landmarks 字段，所以我们只发这个
-      body: JSON.stringify({
-        landmarks: poseData.landmarks
-      }),
+      body: JSON.stringify(poseData),
     });
 
     if (!response.ok) {

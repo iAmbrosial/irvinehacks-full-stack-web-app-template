@@ -105,10 +105,20 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
           lastSentTime.current = now;
           if (torsoVisible) {
             sendPoseData({
-              session_id: "user_123_test",
+              session_id: sessionId,
+              timestamp: now,
+              fps: 30,
+              exercise: exercise,
               landmarks: L.map((lm, index) => ({
-                id: index, x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility
+                id: index, name: "", x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility
               }))
+            }).then((response) => {
+              if (!response) return;
+              setLiveReps(response.reps ?? 0);
+              if (response.realtime_feedback) setLiveFeedback(response.realtime_feedback);
+              if (response.rep_completed && onRepComplete) {
+                onRepComplete({ repCount: response.reps, formIssues: response.form_issues ?? [] });
+              }
             });
             setErrorMessage(lowerBodyVisible ? "" : "PARTIAL VIEW: Lower body not clear");
           } else {
@@ -175,11 +185,17 @@ function PoseTracker({ exercise = "squat", sessionId = "user_session", onRepComp
                     errorMessage ? 'rgba(255, 77, 77, 0.85)' : 'rgba(20, 20, 20, 0.8)',
         padding: '12px 28px', borderRadius: '50px',
         border: `2px solid ${errorMessage.includes("PARTIAL") ? '#FFA500' : errorMessage ? '#FF4D4D' : '#C8F060'}`,
-        color: '#FFF', fontSize: '18px', fontWeight: '800', zIndex: 10, transition: 'all 0.3s'
+        color: '#FFF', fontSize: '18px', fontWeight: '800', zIndex: 10, transition: 'all 0.3s',
+        display: 'flex', gap: '16px', alignItems: 'center',
       }}>
-        <span>{angle !== null ? `${angle}°` : "SCANNING..."}</span>
-        <span>Reps: {liveReps}</span>
-        {errorMessage || (angle !== null ? `SQUAT ANGLE: ${angle}°` : "SCANNING BODY...")}
+        {errorMessage ? (
+          <span>{errorMessage}</span>
+        ) : (
+          <>
+            <span>{angle !== null ? `${angle}°` : "SCANNING..."}</span>
+            <span>Reps: {liveReps}</span>
+          </>
+        )}
       </div>
 
       {/* Live feedback cue from backend SquatDetector */}

@@ -34,9 +34,6 @@ app.mount("/api/", api.app)
 app.mount("/", StaticFiles(directory=PUBLIC_DIRECTORY, html=True), name="public")
 
 
-@app.get("/api/feedback")
-
-
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
 async def not_found(req: Request, exc: HTTPException) -> FileResponse:
     """
