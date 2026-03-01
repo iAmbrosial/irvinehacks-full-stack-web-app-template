@@ -21,12 +21,6 @@ from fastapi.staticfiles import StaticFiles
 
 import api
 
-from squat_detector import SquatDetector
-from pydantic import BaseModel
-
-class LandmarksInput(BaseModel):
-    landmarks: list
-
 PUBLIC_DIRECTORY = Path("public")
 
 # Create a main app under which the API will be mounted as a sub-app
@@ -38,7 +32,10 @@ app.mount("/api/", api.app)
 
 # Make the public files (HTML, JS, CSS, etc.) accessible on the server
 # With HTML mode, `index.html` is automatically loaded
-# app.mount("/", StaticFiles(directory=PUBLIC_DIRECTORY, html=True), name="public")
+app.mount("/", StaticFiles(directory=PUBLIC_DIRECTORY, html=True), name="public")
+
+
+@app.get("/api/feedback")
 
 
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
@@ -53,11 +50,3 @@ async def not_found(req: Request, exc: HTTPException) -> FileResponse:
     This should be removed if the frontend app does not handle different URL paths.
     """
     return FileResponse(PUBLIC_DIRECTORY / "index.html")
-
-# Squat detector object
-detector = SquatDetector()
-
-@app.post("/analyze-squat")
-def analyze_squat(data: LandmarksInput):
-    result = detector.process_frame(data.landmarks)
-    return result

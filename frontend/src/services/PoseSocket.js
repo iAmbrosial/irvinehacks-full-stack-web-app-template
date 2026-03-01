@@ -1,15 +1,20 @@
 // frontend/src/services/PoseSocket.js
+//
+// Sends real-time pose data to the backend for rule-based form feedback.
+// Uses the Vite proxy (/api → http://localhost:8000 in dev, same origin in prod)
+// so this URL works in both environments without any changes at deployment.
+//
+// Reference: https://vitejs.dev/config/server-options.html#server-proxy
 
 /**
- * 发送姿态数据到后端的工具函数
- * @param {Object} poseData - 你刚才定义的那个包含 33 个点的 JSON 对象
+ * Sends one frame of pose landmark data to the backend.
+ *
+ * @param {Object} poseData - shape: { session_id, timestamp, fps, exercise, landmarks[] }
+ * @returns {Object|null} - backend response or null on network error
  */
 export const sendPoseData = async (poseData) => {
   try {
-    // 💡 这里的地址要改成你队友后端跑的地址（比如 http://localhost:8000/process）
-    const BACKEND_URL = "http://localhost:8000/process_pose";
-
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch("/api/realtime-feedback", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -18,13 +23,14 @@ export const sendPoseData = async (poseData) => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.warn(`Realtime feedback error: ${response.status}`);
+      return null;
     }
 
-    const result = await response.json();
-    return result; // 返回后端的分析结果（比如：背太弯了、动作标准等）
+    return response.json();
   } catch (error) {
-    console.error("发送数据失败:", error);
+    // Silently drop network errors during tracking — don't block the render loop
+    console.error("sendPoseData failed:", error);
     return null;
   }
 };
